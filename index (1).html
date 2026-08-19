@@ -1,0 +1,1581 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>PCSOFA Score Calculator</title>
+        <style>
+            /* Base styles */
+            body {
+                font-family: Arial, sans-serif;
+                max-width: 1000px;
+                margin: 0 auto;
+                padding: 20px;
+                background: #f5f5f5;
+                line-height: 1.6;
+            }
+
+            .calculator {
+                background: white;
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            /* Radio card styles */
+            .radio-card-group {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+
+            .radio-card {
+                position: relative;
+                border: 2px solid #eee;
+                border-radius: 8px;
+                transition: all 0.3s ease;
+                cursor: pointer;
+            }
+
+            .radio-card:hover {
+                border-color: #007bff;
+                background: #f8f9fa;
+            }
+
+            .radio-card input[type="radio"] {
+                position: absolute;
+                opacity: 0;
+            }
+
+            .radio-card label {
+                display: block;
+                width: 100%;
+                padding: 12px;
+                margin: 0;
+                cursor: pointer;
+                color: #000;
+                white-space: normal;
+                word-wrap: break-word;
+                line-height: 1.4;
+                box-sizing: border-box;
+                max-width: 100%;
+                font-weight: normal;
+            }
+
+            .radio-card input[type="radio"]:checked + label {
+                color: #1a5f89;
+            }
+
+            .radio-card:has(input[type="radio"]:checked) {
+                background-color: #e3f0fc;
+                border-color: #1a5f89;
+            }
+
+            /* Age group segment control */
+            .segment-control {
+                display: flex;
+                overflow-x: auto;
+                gap: 5px;
+                padding: 10px 0;
+                /* Removed auto-scrolling behavior */
+                scrollbar-width: auto;
+            }
+
+            /* Allow scrollbar to be visible */
+            .segment-control::-webkit-scrollbar {
+                display: block;
+                height: 8px;
+            }
+
+            .segment-control::-webkit-scrollbar-thumb {
+                background-color: #cccccc;
+                border-radius: 4px;
+            }
+
+            .segment-control::-webkit-scrollbar-track {
+                background-color: #f0f0f0;
+            }
+
+            .segment-item {
+                flex: 0 0 auto;
+                padding: 8px 16px;
+                border: 1px solid #ddd;
+                border-radius: 20px;
+                font-size: 14px;
+                white-space: nowrap;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .segment-item.active {
+                background: #e3f0fc;
+                color: #1a5f89;
+                border-color: #1a5f89;
+            }
+
+            /* Number input styles */
+            .number-input {
+                background: white;
+                border: 2px solid #eee;
+                border-radius: 8px;
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+
+            .number-input input {
+                width: 200px;
+                padding: 10px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 16px;
+                -webkit-appearance: none;
+            }
+
+            .number-input label {
+                display: block;
+                margin-bottom: 8px;
+                font-weight: bold;
+                color: #333;
+            }
+
+            /* Section headers */
+            .section-header {
+                color: #2c3e50;
+                margin: 25px 0 15px;
+                font-size: 1.2em;
+                border-bottom: 2px solid #eee;
+                padding-bottom: 8px;
+                background: none;
+                font-weight: bold;
+            }
+
+            .parameter-group {
+                margin-bottom: 30px;
+            }
+
+            .parameter-title {
+                color: #2c3e50;
+                font-size: 1.1em;
+                margin: 15px 0 10px;
+                padding: 8px 0;
+                font-weight: bold;
+                background: #ecf0f1;
+                padding: 10px;
+                border-radius: 4px;
+            }
+
+            /* Results section styles remain unchanged */
+            .result {
+                margin-top: 20px;
+                padding: 20px;
+                background: #f8f9fa;
+                border-radius: 4px;
+            }
+
+            .result h2 {
+                margin-top: 0;
+                color: #2c3e50;
+                text-align: center;
+            }
+
+            .patient-info {
+                background: #fff;
+                padding: 15px;
+                border-radius: 4px;
+                margin-bottom: 15px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+
+            .patient-info-item {
+                margin: 5px 0;
+                font-size: 1.1em;
+                color: #2c3e50;
+            }
+
+            .parameters-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 15px 0;
+                background: white;
+                border-radius: 4px;
+                overflow: hidden;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+
+            .parameters-table th,
+            .parameters-table td {
+                padding: 12px;
+                text-align: left;
+                border-bottom: 1px solid #eee;
+            }
+
+            .parameters-table th {
+                background: #f8f9fa;
+                font-weight: bold;
+                color: #2c3e50;
+            }
+
+            .parameters-table tr:last-child td {
+                border-bottom: none;
+            }
+
+            .score-cell {
+                text-align: center;
+                font-weight: bold;
+                color: #2c3e50;
+            }
+
+            .total-row {
+                background: #f8f9fa;
+                font-weight: bold;
+            }
+
+            @media (max-width: 768px) {
+                .parameters-table th,
+                .parameters-table td {
+                    padding: 8px;
+                    font-size: 0.9em;
+                }
+
+                .patient-info {
+                    padding: 10px;
+                }
+
+                .patient-info-item {
+                    font-size: 1em;
+                }
+            }
+
+            .interpretation {
+                padding: 10px;
+                border-radius: 4px;
+                text-align: center;
+                font-weight: bold;
+                margin: 10px 0;
+            }
+
+            .minimal {
+                background: #c6efce;
+                color: #006100;
+            }
+            .moderate {
+                background: #ffeb9c;
+                color: #9c6500;
+            }
+            .critical-moderate {
+                background: #ffd966;
+                color: #7f6000;
+            }
+            .critical-higher {
+                background: #ffc7ce;
+                color: #9c0006;
+            }
+            .critical-max {
+                background: #ff9999;
+                color: #780000;
+            }
+
+            /* Responsive design */
+            @media (max-width: 768px) {
+                body {
+                    padding: 10px;
+                }
+
+                .calculator {
+                    padding: 15px;
+                }
+
+                h1 {
+                    font-size: 1.5rem;
+                }
+
+                .score {
+                    font-size: 20px;
+                }
+            }
+            button {
+                display: block;
+                margin: 20px auto;
+                padding: 12px 24px;
+                font-size: 16px;
+                font-weight: bold;
+                color: #34495e;
+                background: white;
+                border: 2px solid #ccc;
+                border-radius: 8px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+            }
+
+            button:hover {
+                background: #f5f5f5;
+                transform: translateY(-1px);
+            }
+
+            button.success {
+                background: #4caf50;
+                color: white;
+                border-color: #4caf50;
+            }
+
+            button.error {
+                background: #f44336;
+                color: white;
+                border-color: #f44336;
+            }
+
+            button.success span {
+                display: inline-block;
+                animation: slideIn 0.3s ease;
+            }
+
+            /* Animations */
+            @keyframes slideIn {
+                0% {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+                100% {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            h1 {
+                color: #2c3e50;
+                text-align: center;
+                margin-bottom: 30px;
+                font-size: 2rem;
+            }
+
+            label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: bold;
+                color: #34495e;
+            }
+
+            select,
+            input {
+                width: 100%;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                font-size: 14px;
+                margin-top: 5px;
+            }
+            .shake {
+                animation: shake 0.5s;
+                animation-iteration-count: 2;
+            }
+            @keyframes shake {
+                0% {
+                    transform: translateX(0);
+                }
+                10% {
+                    transform: translateX(-10px);
+                }
+                20% {
+                    transform: translateX(10px);
+                }
+                30% {
+                    transform: translateX(-10px);
+                }
+                40% {
+                    transform: translateX(10px);
+                }
+                50% {
+                    transform: translateX(-10px);
+                }
+                60% {
+                    transform: translateX(10px);
+                }
+                70% {
+                    transform: translateX(-10px);
+                }
+                80% {
+                    transform: translateX(10px);
+                }
+                90% {
+                    transform: translateX(-10px);
+                }
+                100% {
+                    transform: translateX(0);
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="calculator">
+            <h1>PCSOFA Score Calculator</h1>
+
+            <!-- Patient Info -->
+            <div class="section-header">Patient Information</div>
+            <div class="number-input">
+                <label for="mrn">Medical Record Number (MRN)</label>
+                <input
+                    type="text"
+                    id="mrn"
+                    placeholder="Enter 14-digit MRN"
+                    value="1001000"
+                />
+            </div>
+            <div class="number-input">
+                <label for="patientName">Patient Name</label>
+                <input
+                    type="text"
+                    id="patientName"
+                    placeholder="Enter Patient Name"
+                />
+            </div>
+
+            <!-- Age Group Segment Control -->
+            <div class="section-header">Age Group</div>
+            <div class="segment-control" id="ageGroup">
+                <div class="segment-item" data-value="1">< 1m</div>
+                <div class="segment-item" data-value="2">1-11m</div>
+                <div class="segment-item" data-value="3">1-2y</div>
+                <div class="segment-item" data-value="4">2-5y</div>
+                <div class="segment-item" data-value="5">5-12y</div>
+                <div class="segment-item" data-value="6">12-18y</div>
+                <div class="segment-item" data-value="7">≥18y</div>
+            </div>
+
+            <!-- Gas Exchange Section -->
+            <div class="parameter-title">Target PO2/SaO2 achieved with:</div>
+            <div class="parameter-group">
+                <div class="radio-card-group" id="gasExchange1">
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="gas1-0"
+                            name="gasExchange1"
+                            value="0"
+                        />
+                        <label for="gas1-0"
+                            >O2 ≤ 2lit/min OR FiO2 ≤ 60% &/or PIP ≤ 16 &/or PEEP
+                            ≤ 6</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="gas1-1"
+                            name="gasExchange1"
+                            value="1"
+                        />
+                        <label for="gas1-1"
+                            >O2: 2 to 4 lit/min OR FiO2 61 to 80% &/or PIP 16 to
+                            20 &/or PEEP 6 to 8</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="gas1-2"
+                            name="gasExchange1"
+                            value="2"
+                        />
+                        <label for="gas1-2"
+                            >O2: 4 to 6 lit/min OR FiO2 81 to 90% &/or PIP 21 to
+                            24 &/or PEEP 8 to 9</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="gas1-3"
+                            name="gasExchange1"
+                            value="3"
+                        />
+                        <label for="gas1-3"
+                            >O2 ≥7lit/min OR FiO2 >91% &/or PIP ≥25 &/or PEEP
+                            ≥10</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="gas1-4"
+                            name="gasExchange1"
+                            value="4"
+                        />
+                        <label for="gas1-4">Target pO2 not achievable</label>
+                    </div>
+                </div>
+                <div class="parameter-title">
+                    Target PCO2/ETCO2 achieved with:
+                </div>
+                <div class="radio-card-group" id="gasExchange2">
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="gas2-0"
+                            name="gasExchange2"
+                            value="0"
+                        />
+                        <label for="gas2-0">No NIV or Ventilator</label>
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="gas2-1"
+                            name="gasExchange2"
+                            value="1"
+                        />
+                        <label for="gas2-1"
+                            >HFNC OR NIV/ Ventilator Minute volume
+                            ≤300ml/kg</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="gas2-2"
+                            name="gasExchange2"
+                            value="2"
+                        />
+                        <label for="gas2-2"
+                            >NIV / Ventilator Minute volume 300 to
+                            400ml/kg</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="gas2-3"
+                            name="gasExchange2"
+                            value="3"
+                        />
+                        <label for="gas2-3"
+                            >NIV / Ventilator Minute volume ≥ 400ml/kg</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="gas2-4"
+                            name="gasExchange2"
+                            value="4"
+                        />
+                        <label for="gas2-4">Target pCO2 not achievable</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="parameter-title">
+                Haemodynamic targets (HR, BP, CVP):
+            </div>
+            <div class="parameter-group">
+                <div class="radio-card-group" id="haemodynamics">
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="haemo-0"
+                            name="haemodynamics"
+                            value="0"
+                        />
+                        <label for="haemo-0">No Supports</label>
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="haemo-1"
+                            name="haemodynamics"
+                            value="1"
+                        />
+                        <label for="haemo-1"
+                            >Adr ≤ 0.05 &/or Dobut ≤ 5 &/or Dopam ≤5 &/or Milr ≤
+                            0.5 SNP &/or GTN < 5</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="haemo-2"
+                            name="haemodynamics"
+                            value="2"
+                        />
+                        <label for="haemo-2"
+                            >Adr 0.05 to 0.15 &/or Norad≤0.1 &/or Dopamine 10
+                            &/or Dobutam 10 &/or Levose≤0.1 &/or Milr 0.5 to 0.7
+                            &/or SNP/GTN 5 to 10</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="haemo-3"
+                            name="haemodynamics"
+                            value="3"
+                        />
+                        <label for="haemo-3"
+                            >Chest open &/or Adrenal> 0.15 &/or Norad > 0.1 &/or
+                            Vasop ≥0.01 &/or Dopamine >10 &/or Dobutam >10 &/or
+                            Levose≤0.1 &/or Milr ≥ 0.8 &/or SNP or GTN
+                            >10</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="haemo-4"
+                            name="haemodynamics"
+                            value="4"
+                        />
+                        <label for="haemo-4"
+                            >ECMO or Target haemodynamics not achievable</label
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <div class="parameter-group">
+                <div class="parameter-title">
+                    Treatment for Pulmonary Hypertension:
+                </div>
+                <div class="radio-card-group" id="pulmonaryHypertension">
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="pulmo-0"
+                            name="pulmonaryHypertension"
+                            value="0"
+                        />
+                        <label for="pulmo-0">No Supports</label>
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="pulmo-1"
+                            name="pulmonaryHypertension"
+                            value="1"
+                        />
+                        <label for="pulmo-1"
+                            >Sildenafil (oral or iv) &/or Bosentan</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="pulmo-2"
+                            name="pulmonaryHypertension"
+                            value="2"
+                        />
+                        <label for="pulmo-2"
+                            >Nitric oxide &/or Sildenafil &/or Bosentan</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="pulmo-3"
+                            name="pulmonaryHypertension"
+                            value="3"
+                        />
+                        <label for="pulmo-3"
+                            >Riociguat &/or Nitric Oxide &/or Sildenafil &/or
+                            Bosentan</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="pulmo-4"
+                            name="pulmonaryHypertension"
+                            value="4"
+                        />
+                        <label for="pulmo-4"
+                            >Target Pulmonary pressure not achievable</label
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <div class="parameter-group">
+                <div class="parameter-title">Rhythm Control Measures:</div>
+                <div class="radio-card-group" id="rhythmControl">
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="rythm-0"
+                            name="rhythmControl"
+                            value="0"
+                        />
+                        <label for="rythm-0">No Supports</label>
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="rythm-1"
+                            name="rhythmControl"
+                            value="1"
+                        />
+                        <label for="rythm-1"
+                            >Electrolytes correction/ AAI pacing</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="rythm-2"
+                            name="rhythmControl"
+                            value="2"
+                        />
+                        <label for="rythm-2"
+                            >AAI Pacing &/or Single Antiarrythmics</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="rythm-3"
+                            name="rhythmControl"
+                            value="3"
+                        />
+                        <label for="rythm-3"
+                            >DDD/VVI pacing &/or 2 or more Antiarrythmics</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="rythm-4"
+                            name="rhythmControl"
+                            value="4"
+                        />
+                        <label for="rythm-4"
+                            >Target Rhythm control not achievable</label
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <div class="parameter-group">
+                <div class="parameter-title">Blood Product Transfusions:</div>
+                <div class="radio-card-group" id="bloodProducts">
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="blood-0"
+                            name="bloodProducts"
+                            value="0"
+                        />
+                        <label for="blood-0">None</label>
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="blood-1"
+                            name="bloodProducts"
+                            value="1"
+                        />
+                        <label for="blood-1"
+                            >PRBC ≤ 15ml/kg &/or Platel≤10ml/kg &/or FFP≤10ml/kg
+                            &/or Cryo ≤10ml/kg</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="blood-2"
+                            name="bloodProducts"
+                            value="2"
+                        />
+                        <label for="blood-2"
+                            >PRBC 15 to 30ml/kg &/or Platel 10 to 20ml/kg &/or
+                            FFP 10 to 20ml/kg &/or Cryo 10ml to 20/kg</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="blood-3"
+                            name="bloodProducts"
+                            value="3"
+                        />
+                        <label for="blood-3"
+                            >Re expn for Bleeding &/or PRBC 31 to 50ml/kg &/or
+                            Platel 21 to 30ml/kg &/or FFP 21 to 40ml/kg &/or
+                            Cryo 21ml to 30/kg</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="blood-4"
+                            name="bloodProducts"
+                            value="4"
+                        />
+                        <label for="blood-4"
+                            >Factor VII &/or PRBC >50ml/kg &/or Platel >30ml/kg
+                            &/or FFP >40ml/kg &/or Cryo >30/kg</label
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <div class="parameter-group">
+                <div class="parameter-title">
+                    Neurological Status and Treatment:
+                </div>
+                <div class="radio-card-group" id="neurology">
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="neuro-0"
+                            name="neurology"
+                            value="0"
+                        />
+                        <label for="neuro-0">None</label>
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="neuro-1"
+                            name="neurology"
+                            value="1"
+                        />
+                        <label for="neuro-1"
+                            >< 2 Neuro medications EEG and CT normal</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="neuro-2"
+                            name="neurology"
+                            value="2"
+                        />
+                        <label for="neuro-2"
+                            >2 to 5 Neuro meds Abnormal EEG &/or CT brain &/or
+                            MRI brain</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="neuro-3"
+                            name="neurology"
+                            value="3"
+                        />
+                        <label for="neuro-3">> 5 Neuro medications</label>
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="neuro-4"
+                            name="neurology"
+                            value="4"
+                        />
+                        <label for="neuro-4"
+                            >> 6 neuro medications &/or Long stay > 3
+                            weeks</label
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <div class="parameter-group">
+                <div class="parameter-title">Fluid Balance Management:</div>
+                <div class="radio-card-group" id="fluidBalance">
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="fluid-0"
+                            name="fluidBalance"
+                            value="0"
+                        />
+                        <label for="fluid-0">1 diuretics and no PD</label>
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="fluid-1"
+                            name="fluidBalance"
+                            value="1"
+                        />
+                        <label for="fluid-1">2 diuretics and No PD</label>
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="fluid-2"
+                            name="fluidBalance"
+                            value="2"
+                        />
+                        <label for="fluid-2">3 diuretics &/or PD</label>
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="fluid-3"
+                            name="fluidBalance"
+                            value="3"
+                        />
+                        <label for="fluid-3"
+                            >3 diuretics including Torsemide &/or PD</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="fluid-4"
+                            name="fluidBalance"
+                            value="4"
+                        />
+                        <label for="fluid-4"
+                            >Target fluid balance not achieved</label
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <div class="parameter-group">
+                <div class="parameter-title">Enteral Nutrition Tolerance:</div>
+                <div class="radio-card-group" id="feedTolerance">
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="feed-0"
+                            name="feedTolerance"
+                            value="0"
+                        />
+                        <label for="feed-0"
+                            >No feed intolerance OR NPO for Extubation/Preop or
+                            day 1 post op</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="feed-1"
+                            name="feedTolerance"
+                            value="1"
+                        />
+                        <label for="feed-1"
+                            >Mild feed intolerance (1 or 2 vomits OR 10 to 20%
+                            of feed comes out as NGaspirates)</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="feed-2"
+                            name="feedTolerance"
+                            value="2"
+                        />
+                        <label for="feed-2"
+                            >Moderate feed intolerance (3 or 4 vomits OR 21 to
+                            40% of feed comes out as NGaspirates)</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="feed-3"
+                            name="feedTolerance"
+                            value="3"
+                        />
+                        <label for="feed-3"
+                            >Severe feed intolerance (≥ 5 Vomiting OR ≥41% of
+                            feed comes out as NGaspirates)</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="feed-4"
+                            name="feedTolerance"
+                            value="4"
+                        />
+                        <label for="feed-4">NPO more than 24 hours</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="number-input">
+                <label for="creatinine">Creatinine Value (mg/dL)</label>
+                <input
+                    type="number"
+                    id="creatinine"
+                    step="0.1"
+                    placeholder="Enter value"
+                />
+            </div>
+            <div class="number-input">
+                <label for="bilirubin">Total Bilirubin (mg/dL)</label>
+                <input
+                    type="number"
+                    id="bilirubin"
+                    step="0.1"
+                    placeholder="Enter value"
+                />
+            </div>
+            <div class="parameter-group">
+                <div class="parameter-title">Infection Control Measures:</div>
+                <div class="radio-card-group" id="infection">
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="infect-0"
+                            name="infection"
+                            value="0"
+                        />
+                        <label for="infect-0">0</label>
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="infect-1"
+                            name="infection"
+                            value="1"
+                        />
+                        <label for="infect-1">Single Antibiotics</label>
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="infect-2"
+                            name="infection"
+                            value="2"
+                        />
+                        <label for="infect-2">2 Abx</label>
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="infect-3"
+                            name="infection"
+                            value="3"
+                        />
+                        <label for="infect-3"
+                            >Filgrastim &/or 3 or 4 abx &/or ET culture
+                            +ve</label
+                        >
+                    </div>
+                    <div class="radio-card">
+                        <input
+                            type="radio"
+                            id="infect-4"
+                            name="infection"
+                            value="4"
+                        />
+                        <label for="infect-4"
+                            >Filgrastim &/or 5 or more abx &/or Bld cultre +ve
+                            &/or Mediatstinitis</label
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results section -->
+            <div class="result">
+                <h2>Results</h2>
+                <div id="totalScore">Total Score: 0</div>
+                <div id="interpretation">Please complete all fields</div>
+                <div id="selectedOptions"></div>
+            </div>
+
+            <button onclick="handleButtonClick()">Copy & Submit</button>
+        </div>
+
+        <script>
+            function getCreatinineScore(age, value) {
+                if (!age || !value) return null;
+
+                const ranges = {
+                    1: [
+                        [0.8, 0],
+                        [0.9, 1],
+                        [1.1, 2],
+                        [1.5, 3],
+                        [Infinity, 4],
+                    ], // <1 month
+                    2: [
+                        [0.3, 0],
+                        [0.4, 1],
+                        [0.7, 2],
+                        [1.1, 3],
+                        [Infinity, 4],
+                    ], // 1-11 months
+                    3: [
+                        [0.4, 0],
+                        [0.5, 1],
+                        [1.0, 2],
+                        [1.4, 3],
+                        [Infinity, 4],
+                    ], // 1-2 years
+                    4: [
+                        [0.6, 0],
+                        [0.8, 1],
+                        [1.5, 2],
+                        [2.2, 3],
+                        [Infinity, 4],
+                    ], // 2-5 years
+                    5: [
+                        [0.7, 0],
+                        [1.0, 1],
+                        [1.7, 2],
+                        [2.5, 3],
+                        [Infinity, 4],
+                    ], // 5-12 years
+                    6: [
+                        [1.0, 0],
+                        [1.6, 1],
+                        [2.8, 2],
+                        [4.1, 3],
+                        [Infinity, 4],
+                    ], // 12-18 years
+                    7: [
+                        [1.2, 0],
+                        [1.9, 1],
+                        [3.4, 2],
+                        [4.9, 3],
+                        [Infinity, 4],
+                    ], // ≥18 years
+                };
+
+                const ageRanges = ranges[age];
+                for (let [threshold, score] of ageRanges) {
+                    if (value < threshold) return score;
+                }
+                return 4;
+            }
+
+            function getBilirubinScore(value) {
+                if (!value) return null;
+                if (value < 1.2) return 0;
+                if (value < 1.9) return 1;
+                if (value < 5.9) return 2;
+                if (value < 11.9) return 3;
+                return 4;
+            }
+
+            function calculateScore() {
+                const selects = [
+                    {
+                        id: "gasExchange1",
+                        name: "gasExchange1",
+                        label: "Target PO2/SaO2 achieved with:",
+                    },
+                    {
+                        id: "gasExchange2",
+                        name: "gasExchange2",
+                        label: "Target PCO2/ETCO2 achieved with:",
+                    },
+                    {
+                        id: "haemodynamics",
+                        name: "haemodynamics",
+                        label: "Haemodynamic targets (HR, BP, CVP):",
+                    },
+                    {
+                        id: "pulmonaryHypertension",
+                        name: "pulmonaryHypertension",
+                        label: "Treatment for Pulmonary Hypertension:",
+                    },
+                    {
+                        id: "rhythmControl",
+                        name: "rhythmControl",
+                        label: "Rhythm Control Measures:",
+                    },
+                    {
+                        id: "bloodProducts",
+                        name: "bloodProducts",
+                        label: "Blood Product Transfusions:",
+                    },
+                    {
+                        id: "neurology",
+                        name: "neurology",
+                        label: "Neurological Status and Treatment:",
+                    },
+                    {
+                        id: "fluidBalance",
+                        name: "fluidBalance",
+                        label: "Fluid Balance Management:",
+                    },
+                    {
+                        id: "feedTolerance",
+                        name: "feedTolerance",
+                        label: "Enteral Nutrition Tolerance:",
+                    },
+                    {
+                        id: "infection",
+                        name: "infection",
+                        label: "Infection Control Measures:",
+                    },
+                ];
+
+                let totalScore = 0;
+                let selectedOptions = [];
+
+                // Add MRN and Patient Name as separate patient info (not counted in score)
+                const mrn = document.getElementById("mrn").value;
+                const patientName =
+                    document.getElementById("patientName").value;
+                selectedOptions.push(
+                    {
+                        label: "MRN",
+                        selectedText: mrn || "Not provided",
+                        score: null,
+                    },
+                    {
+                        label: "Patient Name",
+                        selectedText: patientName || "Not provided",
+                        score: null,
+                    },
+                );
+
+                selects.forEach(({ id, name, label }) => {
+                    const selectedRadio = document.querySelector(
+                        `input[name="${name}"]:checked`,
+                    );
+                    const selectedText = selectedRadio
+                        ? selectedRadio.nextElementSibling.innerText
+                        : '<span style="color: red;">Not selected</span>';
+                    const value = parseInt(
+                        selectedRadio ? selectedRadio.value : 0,
+                    );
+
+                    totalScore += value;
+                    selectedOptions.push({ label, selectedText, score: value });
+                });
+
+                const ageGroupItems =
+                    document.querySelectorAll(".segment-item");
+                let ageGroupValue = null;
+                ageGroupItems.forEach((item) => {
+                    if (item.classList.contains("active")) {
+                        ageGroupValue = parseInt(item.dataset.value);
+                    }
+                });
+
+                const creatinineValue = parseFloat(
+                    document.getElementById("creatinine").value,
+                );
+                const creatinineScore = getCreatinineScore(
+                    ageGroupValue,
+                    creatinineValue,
+                );
+
+                if (!isNaN(creatinineValue)) {
+                    totalScore += creatinineScore;
+                    selectedOptions.push({
+                        label: "Creatinine",
+                        selectedText: `${creatinineValue} mg/dL`,
+                        score: creatinineScore,
+                    });
+                }
+
+                const bilirubinValue = parseFloat(
+                    document.getElementById("bilirubin").value,
+                );
+                const bilirubinScore = getBilirubinScore(bilirubinValue);
+
+                if (!isNaN(bilirubinValue)) {
+                    totalScore += bilirubinScore;
+                    selectedOptions.push({
+                        label: "Total Bilirubin",
+                        selectedText: `${bilirubinValue} mg/dL`,
+                        score: bilirubinScore,
+                    });
+                }
+
+                updateResults(totalScore, selectedOptions);
+            }
+
+            function updateResults(totalScore, selectedOptions) {
+                let interpretation, className;
+                if (totalScore < 5) {
+                    interpretation = "Stable with minimal support";
+                    className = "minimal";
+                } else if (totalScore <= 10) {
+                    interpretation = "Stable with moderate support";
+                    className = "moderate";
+                } else if (totalScore <= 18) {
+                    interpretation =
+                        "Critical with moderate support or stable with higher supports";
+                    className = "critical-moderate";
+                } else if (totalScore <= 25) {
+                    interpretation = "Critical with higher support";
+                    className = "critical-higher";
+                } else {
+                    interpretation = "Critical despite maximum support";
+                    className = "critical-max";
+                }
+
+                // Update score and interpretation
+                document.getElementById("totalScore").innerText =
+                    `Total Score: ${totalScore}`;
+                const interpretationElement =
+                    document.getElementById("interpretation");
+                interpretationElement.innerText = interpretation;
+                interpretationElement.className = `interpretation ${className}`;
+
+                // Create result display
+                let selectedOptionsDiv =
+                    document.getElementById("selectedOptions");
+                if (!selectedOptionsDiv) {
+                    selectedOptionsDiv = document.createElement("div");
+                    selectedOptionsDiv.id = "selectedOptions";
+                    selectedOptionsDiv.style.marginTop = "20px";
+                    document
+                        .querySelector(".result")
+                        .appendChild(selectedOptionsDiv);
+                }
+
+                // Create HTML display with table (keep existing table code)
+                const patientInfo = selectedOptions.slice(0, 2);
+                const parameters = selectedOptions.slice(2);
+
+                const htmlOutput = `
+                <div class="patient-info">
+                    ${patientInfo
+                        .map(
+                            ({ label, selectedText }) =>
+                                `<div class="patient-info-item">${label}: ${selectedText}</div>`,
+                        )
+                        .join("")}
+                </div>
+                <table class="parameters-table">
+                    <thead>
+                        <tr>
+                            <th>Parameter</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${parameters
+                            .map(
+                                ({ label, selectedText, score }) => `
+                            <tr>
+                                <td>${label}: ${selectedText}</td>
+                                <td class="score-cell">${score}</td>
+                            </tr>
+                        `,
+                            )
+                            .join("")}
+                        <tr class="total-row">
+                            <td>Total Score</td>
+                            <td class="score-cell">${totalScore}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+
+                // Create clean, professional text output without emojis or markdown
+                let textOutput = `PCSOFA Score Results\n\n`;
+
+                // Patient Info section
+                patientInfo.forEach(({ label, selectedText }) => {
+                    textOutput += `${label}: ${selectedText}\n`;
+                });
+
+                textOutput += `\nParameters and Scores:\n`;
+
+                // Parameters with scores
+                parameters.forEach(({ label, selectedText, score }) => {
+                    textOutput += `${label.toUpperCase()}\n${selectedText}\nScore: ${score}\n\n`;
+                });
+
+                textOutput += `TOTAL SCORE: ${totalScore}\n\n`;
+                textOutput += `INTERPRETATION: ${interpretation}\n`;
+
+                // Update display
+                selectedOptionsDiv.innerHTML = htmlOutput;
+
+                // Store text version for clipboard
+                selectedOptionsDiv.setAttribute(
+                    "data-clipboard-text",
+                    textOutput,
+                );
+            }
+
+            function handleButtonClick() {
+                const mrn = document.getElementById("mrn").value;
+                if (mrn.length !== 14) {
+                    // 14-digit MRN validation
+                    const button = document.querySelector("button");
+                    button.classList.add("shake");
+                    setTimeout(() => button.classList.remove("shake"), 500); // Add a shake animation class
+                    // Removed auto-scrolling to MRN
+                    alert("Please enter a valid 14-digit MRN");
+                    return false; // Prevent form submission
+                }
+
+                // Copy text to clipboard first
+                copyText();
+
+                // Show success message immediately
+                const button = document.querySelector("button");
+                const originalButtonText = button.innerHTML;
+                button.classList.add("success");
+                button.innerHTML = `<span>✔ Copied and Sent to Google Sheets!</span>`;
+                setTimeout(() => {
+                    button.innerHTML = originalButtonText;
+                    button.classList.remove("success");
+                }, 5000);
+
+                // Then send data to sheet in the background
+                sendDataToSheet();
+            }
+
+            function copyText() {
+                const selectedOptionsDiv =
+                    document.getElementById("selectedOptions");
+                const textToCopy = selectedOptionsDiv.getAttribute(
+                    "data-clipboard-text",
+                );
+
+                navigator.clipboard
+                    .writeText(textToCopy)
+                    .then(() => console.log("Copied to clipboard!"))
+                    .catch((err) => {
+                        console.error("Failed to copy text: ", err);
+                        alert("Failed to copy text. Please try again.");
+                    });
+            }
+
+            function sendDataToSheet() {
+                const data = {
+                    mrn: document.getElementById("mrn").value || "Not provided",
+                    patientName:
+                        document.getElementById("patientName").value ||
+                        "Not provided",
+                    gasExchange1:
+                        document.querySelector(
+                            'input[name="gasExchange1"]:checked',
+                        )?.value || "0",
+                    gasExchange2:
+                        document.querySelector(
+                            'input[name="gasExchange2"]:checked',
+                        )?.value || "0",
+                    haemodynamics:
+                        document.querySelector(
+                            'input[name="haemodynamics"]:checked',
+                        )?.value || "0",
+                    pulmonaryHypertension:
+                        document.querySelector(
+                            'input[name="pulmonaryHypertension"]:checked',
+                        )?.value || "0",
+                    rhythmControl:
+                        document.querySelector(
+                            'input[name="rhythmControl"]:checked',
+                        )?.value || "0",
+                    bloodProducts:
+                        document.querySelector(
+                            'input[name="bloodProducts"]:checked',
+                        )?.value || "0",
+                    neurology:
+                        document.querySelector(
+                            'input[name="neurology"]:checked',
+                        )?.value || "0",
+                    fluidBalance:
+                        document.querySelector(
+                            'input[name="fluidBalance"]:checked',
+                        )?.value || "0",
+                    feedTolerance:
+                        document.querySelector(
+                            'input[name="feedTolerance"]:checked',
+                        )?.value || "0",
+                    infection:
+                        document.querySelector(
+                            'input[name="infection"]:checked',
+                        )?.value || "0",
+                    ageGroup:
+                        document.querySelector(".segment-item.active")?.dataset
+                            .value || "1",
+                    creatinine:
+                        document.getElementById("creatinine").value || "0",
+                    bilirubin:
+                        document.getElementById("bilirubin").value || "0",
+                    totalScore: document
+                        .getElementById("totalScore")
+                        .innerText.replace("Total Score: ", ""),
+                };
+
+                // Log the data for debugging
+                console.log("Sending data to Google Sheets:", data);
+
+                // Google Apps Script URL
+                const url = "https://script.google.com/macros/s/AKfycbxTIfd3BAp4NYWBFWbVoHra2bloJ9i3v9vtc98bo2cAG4Z18tPr-hw4myZgGdUJYi-DeQ/exec";
+
+                // Use fetch with no-cors mode to send data
+                fetch(url, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(data),
+                })
+                    .then(() => {
+                        // We won't get a readable response due to no-cors mode
+                        // but we can log that the request completed
+                        console.log("Request to Google Sheets completed");
+                    })
+                    .catch((error) => {
+                        console.error(
+                            "Error sending data to Google Sheets:",
+                            error,
+                        );
+                        // Log error but don't change button state since we already
+                        // showed the success message to the user
+                    });
+            }
+
+            document.addEventListener("DOMContentLoaded", function () {
+                // Segment control handler
+                const segmentControl =
+                    document.querySelector(".segment-control");
+                segmentControl.addEventListener("click", (e) => {
+                    const item = e.target.closest(".segment-item");
+                    if (item) {
+                        document
+                            .querySelectorAll(".segment-item")
+                            .forEach((i) => i.classList.remove("active"));
+                        item.classList.add("active");
+                        // Trigger score calculation
+                        calculateScore();
+                    }
+                });
+
+                // Radio card handlers
+                document
+                    .querySelectorAll('.radio-card input[type="radio"]')
+                    .forEach((radio) => {
+                        radio.addEventListener("change", function () {
+                            calculateScore();
+                        });
+                    });
+
+                // Initialize other event listeners
+                document
+                    .querySelectorAll(
+                        "input[type='number'], input[type='text']",
+                    )
+                    .forEach((element) => {
+                        element.addEventListener("input", calculateScore);
+                    });
+
+                //Checks if MRN is 14 digits
+                document
+                    .getElementById("mrn")
+                    .addEventListener("input", function () {
+                        const mrn = this.value;
+                        // Visual feedback for valid/invalid MRN
+                        if (mrn.length === 14 && /^\d+$/.test(mrn)) {
+                            this.style.borderColor = "#4CAF50";
+                        } else if (mrn.length > 0) {
+                            this.style.borderColor = "#ff9999";
+                        } else {
+                            this.style.borderColor = "#ddd"; // Default color
+                        }
+                    });
+            });
+        </script>
+    </body>
+</html>
